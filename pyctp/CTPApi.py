@@ -522,8 +522,13 @@ class CTPTrade(TraderApi):
             logger.info(f'<成交>信息推送完毕')
 
     def OnRspQryInvestorPosition(self, pInvestorPosition, pRspInfo, nRequestID, bIsLast):
-        p = struct_format(pInvestorPosition)
-        logger.info(f'<持仓>持仓信息:{p}')
+        if pInvestorPosition:
+            p = struct_format(pInvestorPosition)
+            logger.info(f'<持仓>持仓信息:{p}')
+
+        if pRspInfo and pRspInfo.ErrorID != 0:
+            RspInfo = struct_format(pRspInfo)
+            logger.error(f'<ReqID: {nRequestID}>ErrorID:{RspInfo["ErrorID"]}  ErrorMsg:{RspInfo["ErrorMsg"]}')
 
         if bIsLast:
             logger.info(f'<持仓>信息推送完毕')
