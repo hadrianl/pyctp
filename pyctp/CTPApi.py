@@ -279,6 +279,42 @@ class CTPTrade(TraderApi):
         self.ReqQryInvestorPosition(p, self.reqID)
         return self.reqID
 
+    def qrySettlementInfoConfirm(self):
+        self.reqID += 1
+        s = ApiStruct.QrySettlementInfoConfirm(BrokerID=self.brokerID.encode(), InvestorID=self.userID.encode())
+        self.ReqQrySettlementInfoConfirm(s, self.reqID)
+        return self.reqID
+
+    def qrypSettlementInfo(self, date):
+        self.reqID += 1
+        s = ApiStruct.QrySettlementInfo(BrokerID=self.brokerID.encode(), InvestorID=self.userID.encode(), TradingDay=date.encode())
+        self.ReqQrySettlementInfo(s, self.reqID)
+        return self.reqID
+
+    def qryProduct(self, productID):
+        self.reqID += 1
+        p = ApiStruct.QryProduct(ProductID=productID.encode())
+        self.ReqQryProduct(p, self.reqID)
+        return self.reqID
+
+    def qryDepthMarketData(self, instrumentID=''):
+        self.reqID += 1
+        d = ApiStruct.QryDepthMarketData(InstrumentID=instrumentID.encode())
+        self.ReqQryDepthMarketData(d, self.reqID)
+        return self.reqID
+
+    def qryInstrument(self, instrumentID='', exchangeID='', exchangeInstID='', productID=''):
+        self.reqID += 1
+        i = ApiStruct.QryInstrument(InstrumentID=instrumentID.encode(), ExchangeID=exchangeID.encode(), ExchangeInstID=exchangeInstID.encode(), ProductID=productID.encode())
+        self.ReqQryInstrument(i, self.reqID)
+        return self.reqID
+
+    def qryInstrumentCommissionRate(self, instrumentID=''):
+        self.reqID += 1
+        rate = ApiStruct.QryInstrumentCommissionRate(BrokerID=self.brokerID.encode(), InvestorID=self.userID.encode(), InstrumentID=instrumentID.encode())
+        self.ReqQryInstrumentCommissionRate(rate, self.reqID)
+        return self.reqID
+
     def sendOrder(self, order):
         self.reqID += 1
         self.orderRef += 1
@@ -461,11 +497,16 @@ class CTPTrade(TraderApi):
         logger.error(f'<ReqID: {nRequestID}>ErrorID:{RspInfo["ErrorID"]}  ErrorMsg:{RspInfo["ErrorMsg"]}')
 
     def OnRspOrderAction(self, pInputOrderAction, pRspInfo, nRequestID, bIsLast):
-        order = struct_format(pInputOrderAction)
-        logger.info(f'<订单>报单操作:{order}')
+        if pInputOrderAction:
+            order = struct_format(pInputOrderAction)
+            logger.info(f'<订单>报单操作:{order}')
 
-        RspInfo = struct_format(pRspInfo)
-        logger.error(f'<ReqID: {nRequestID}>ErrorID:{RspInfo["ErrorID"]}  ErrorMsg:{RspInfo["ErrorMsg"]}')
+        if pRspInfo and pRspInfo.ErrorID != 0:
+            RspInfo = struct_format(pRspInfo)
+            logger.error(f'<ReqID: {nRequestID}>ErrorID:{RspInfo["ErrorID"]}  ErrorMsg:{RspInfo["ErrorMsg"]}')
+
+        if bIsLast:
+            logger.info(f'<订单>报单操作信息推送完毕')
 
     def OnRspParkedOrderInsert(self, pParkedOrder, pRspInfo, nRequestID, bIsLast):...
 
@@ -474,12 +515,18 @@ class CTPTrade(TraderApi):
     def OnRspQueryMaxOrderVolume(self, pQueryMaxOrderVolume, pRspInfo, nRequestID, bIsLast):...
 
     def OnRspSettlementInfoConfirm(self, pSettlementInfoConfirm, pRspInfo, nRequestID, bIsLast):
-        if pRspInfo.ErrorID == 0:
+
+        if pSettlementInfoConfirm:
             settlementInfoConfirm = struct_format(pSettlementInfoConfirm)
             logger.info(f'<结算>信息:{settlementInfoConfirm}')
-        else:
+
+        if pRspInfo and pRspInfo.ErrorID != 0:
             RspInfo = struct_format(pRspInfo)
             logger.error(f'<ReqID: {nRequestID}>ErrorID:{RspInfo["ErrorID"]}  ErrorMsg:{RspInfo["ErrorMsg"]}')
+
+        if bIsLast:
+            logger.info(f'<结算>信息推送完毕')
+
 
     def OnRspRemoveParkedOrder(self, pRemoveParkedOrder, pRspInfo, nRequestID, bIsLast):...
 
@@ -534,8 +581,16 @@ class CTPTrade(TraderApi):
             logger.info(f'<持仓>信息推送完毕')
 
     def OnRspQryTradingAccount(self, pTradingAccount, pRspInfo, nRequestID, bIsLast):
-        t = struct_format(pTradingAccount)
-        logger.info(f'<账户>账户信息:{t}')
+        if pTradingAccount:
+            t = struct_format(pTradingAccount)
+            logger.info(f'<账户>账户信息:{t}')
+
+        if pRspInfo and pRspInfo.ErrorID != 0:
+            RspInfo = struct_format(pRspInfo)
+            logger.error(f'<ReqID: {nRequestID}>ErrorID:{RspInfo["ErrorID"]}  ErrorMsg:{RspInfo["ErrorMsg"]}')
+
+        if bIsLast:
+            logger.info(f'<账户>信息推送完毕')
 
     def OnRspQryInvestor(self, pInvestor, pRspInfo, nRequestID, bIsLast):...
 
@@ -543,22 +598,79 @@ class CTPTrade(TraderApi):
 
     def OnRspQryInstrumentMarginRate(self, pInstrumentMarginRate, pRspInfo, nRequestID, bIsLast):...
 
-    def OnRspQryInstrumentCommissionRate(self, pInstrumentCommissionRate, pRspInfo, nRequestID, bIsLast):...
+    def OnRspQryInstrumentCommissionRate(self, pInstrumentCommissionRate, pRspInfo, nRequestID, bIsLast):
+        if pInstrumentCommissionRate:
+            t = struct_format(pInstrumentCommissionRate)
+            logger.info(f'<手续费>手续费信息:{t}')
+
+        if pRspInfo and pRspInfo.ErrorID != 0:
+            RspInfo = struct_format(pRspInfo)
+            logger.error(f'<ReqID: {nRequestID}>ErrorID:{RspInfo["ErrorID"]}  ErrorMsg:{RspInfo["ErrorMsg"]}')
+
+        if bIsLast:
+            logger.info(f'<手续费>信息推送完毕')
 
     def OnRspQryExchange(self, pExchange, pRspInfo, nRequestID, bIsLast):...
 
-    def OnRspQryProduct(self, pProduct, pRspInfo, nRequestID, bIsLast):...
+    def OnRspQryProduct(self, pProduct, pRspInfo, nRequestID, bIsLast):
+        if pProduct:
+            t = struct_format(pProduct)
+            logger.info(f'<产品>产品信息:{t}')
+
+        if pRspInfo and pRspInfo.ErrorID != 0:
+            RspInfo = struct_format(pRspInfo)
+            logger.error(f'<ReqID: {nRequestID}>ErrorID:{RspInfo["ErrorID"]}  ErrorMsg:{RspInfo["ErrorMsg"]}')
+
+        if bIsLast:
+            logger.info(f'<产品>信息推送完毕')
 
     def OnRspQryInstrument(self, pInstrument, pRspInfo, nRequestID, bIsLast):
-        c = struct_format(pInstrument)
-        logger.info(f'<合约>合约信息:{c}')
+        if pInstrument:
+            i = struct_format(pInstrument)
+            logger.info(f'<合约>合约信息:{i}')
+
+        if pRspInfo and pRspInfo.ErrorID != 0:
+            RspInfo = struct_format(pRspInfo)
+            logger.error(f'<ReqID: {nRequestID}>ErrorID:{RspInfo["ErrorID"]}  ErrorMsg:{RspInfo["ErrorMsg"]}')
 
         if bIsLast:
             logger.info('<合约>信息推送完毕')
 
-    def OnRspQryDepthMarketData(self, pDepthMarketData, pRspInfo, nRequestID, bIsLast):...
+    def OnRspQryDepthMarketData(self, pDepthMarketData, pRspInfo, nRequestID, bIsLast):
+        if pDepthMarketData:
+            pSettlementInfo = struct_format(pDepthMarketData)
+            logger.info(f'<深度>信息:{pSettlementInfo}')
 
-    def OnRspQrySettlementInfo(self, pSettlementInfo, pRspInfo, nRequestID, bIsLast):...
+        if pRspInfo and pRspInfo.ErrorID != 0:
+            RspInfo = struct_format(pRspInfo)
+            logger.error(f'<ReqID: {nRequestID}>ErrorID:{RspInfo["ErrorID"]}  ErrorMsg:{RspInfo["ErrorMsg"]}')
+
+        if bIsLast:
+            logger.info(f'<深度>信息推送完毕')
+
+    def OnRspQrySettlementInfo(self, pSettlementInfo, pRspInfo, nRequestID, bIsLast):
+        if pSettlementInfo:
+            pSettlementInfo = struct_format(pSettlementInfo)
+            logger.info(f'<结算>信息:{pSettlementInfo}')
+
+        if pRspInfo and pRspInfo.ErrorID != 0:
+            RspInfo = struct_format(pRspInfo)
+            logger.error(f'<ReqID: {nRequestID}>ErrorID:{RspInfo["ErrorID"]}  ErrorMsg:{RspInfo["ErrorMsg"]}')
+
+        if bIsLast:
+            logger.info(f'<结算>信息推送完毕')
+
+    def OnRspQrySettlementInfoConfirm(self, pSettlementInfoConfirm, pRspInfo, nRequestID, bIsLast):
+        if pSettlementInfoConfirm:
+            pSettlementInfo = struct_format(pSettlementInfoConfirm)
+            logger.info(f'<结算>信息:{pSettlementInfo}')
+
+        if pRspInfo and pRspInfo.ErrorID != 0:
+            RspInfo = struct_format(pRspInfo)
+            logger.error(f'<ReqID: {nRequestID}>ErrorID:{RspInfo["ErrorID"]}  ErrorMsg:{RspInfo["ErrorMsg"]}')
+
+        if bIsLast:
+            logger.info(f'<结算>信息推送完毕')
 
     def OnRspQryTransferBank(self, pTransferBank, pRspInfo, nRequestID, bIsLast):...
 
@@ -612,7 +724,6 @@ class CTPTrade(TraderApi):
     def OnRspQryProductGroup(self, pProductGroup, pRspInfo, nRequestID, bIsLast):...
     def OnRspQryQuote(self, pQuote, pRspInfo, nRequestID, bIsLast):...
     def OnRspQrySecAgentACIDMap(self, pSecAgentACIDMap, pRspInfo, nRequestID, bIsLast):...
-    def OnRspQrySettlementInfoConfirm(self, pSettlementInfoConfirm, pRspInfo, nRequestID, bIsLast):...
     def OnRspQryTradingNotice(self, pTradingNotice, pRspInfo, nRequestID, bIsLast):...
     def OnRspQryTransferSerial(self, pTransferSerial, pRspInfo, nRequestID, bIsLast):...
     def OnRspQueryBankAccountMoneyByFuture(self, pReqQueryAccount, pRspInfo, nRequestID, bIsLast):...
@@ -625,7 +736,6 @@ class CTPTrade(TraderApi):
     def OnRtnTrade(self, pTrade):
         t = struct_format(pTrade)
         logger.info(f'<成交>成交回报:{t}')
-
 
     def OnErrRtnOrderInsert(self, pInputOrder, pRspInfo):
         i_o = struct_format(pInputOrder)
