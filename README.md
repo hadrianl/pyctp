@@ -1,12 +1,12 @@
 # CTP封装， 参照vnpy与pyctp的二次封装
 -（仅适用于64位win，可以自行编译pyctp的针对相关平台的ctp，替换掉ctp文件夹）
-| 消息 | 格式 | 示例 |\n
-| 请求 | Req------ | ReqUserLogin |\n
-| 响应 | OnRsp------ | OnRspUserLogin |\n
-| 查询 | ReqQry------ | ReqQryInstrument |\n
-| 查询请求的响应 | OnRspQry------ | OnRspQryInstrument |\n
-| 回报 | OnRtn------ | OnRtnOrder |\n
-| 错误回报 | OnErrRtn------ | OnErrRtnOrderInsert |
+- | 消息 | 格式 | 示例 |
+- | 请求 | Req------ | ReqUserLogin |
+- | 响应 | OnRsp------ | OnRspUserLogin |
+- | 查询 | ReqQry------ | ReqQryInstrument |
+- | 查询请求的响应 | OnRspQry------ | OnRspQryInstrument |
+- | 回报 | OnRtn------ | OnRtnOrder |
+- | 错误回报 | OnErrRtn------ | OnErrRtnOrderInsert |
 
 ## MarketAPI
 ``` python
