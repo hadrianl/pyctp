@@ -64,5 +64,6 @@ trade_api.sendOrder(limit_order)
 ```
 
 ## 安装
-- python setup.py build
+- git clone https://github.com/hadrianl/pyctp.git
+- cd pyctp
 - python setup.py install
