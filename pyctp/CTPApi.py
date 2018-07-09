@@ -380,7 +380,8 @@ class CTPTrade(TraderApi):
             UserLogout.UserID = self.userID.encode()
             self.reqID =+ 1
             self.ReqUserLogout(UserLogout, self.reqID)
-            self.Release()
+
+            # self.Release()
 
     def register_rsp_callback(self, func_name, log_type='请求回调处理', log=False):
         if getattr(self, func_name, None) == None:
@@ -825,5 +826,5 @@ class CTPTrade(TraderApi):
         o_a = struct_format(pOrderAction)
         e = struct_format(pRspInfo)
         logger.error(f'<订单>撤单错误回报:{o_a} 错误:{e}')
-        
+
 
