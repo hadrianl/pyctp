@@ -228,7 +228,7 @@ class CTPTrade(TraderApi):
                                             UserProductInfo=self.userProductInfo.encode(),
                                             AuthCode=self.authCode.encode())
             self.reqID += 1
-            self.ReqAuthenticate(auth_req, self.reqID)
+            return self.ReqAuthenticate(auth_req, self.reqID)
 
     def login(self):
         if self.loginFailed:
@@ -239,7 +239,7 @@ class CTPTrade(TraderApi):
                                          Password=self.password.encode(),
                                          BrokerID=self.brokerID.encode())
             self.reqID += 1
-            self.ReqUserLogin(req, self.reqID)
+            return self.ReqUserLogin(req, self.reqID)
 
     def qryOrder(self, instrumentID='', exchangeID='', orderSysID='', startTime='', endTime=''):
         o = ApiStruct.QryOrder(BrokerID=self.brokerID.encode(),
@@ -251,8 +251,7 @@ class CTPTrade(TraderApi):
                                InsertTimeEnd=endTime.encode()
                                )
         self.reqID += 1
-        self.ReqQryOrder(o, self.reqID)
-        return self.reqID
+        return self.ReqQryOrder(o, self.reqID)
 
     def qryTrade(self, instrumentID='', exchangeID='', tradeID='', startTime='', endTime=''):
         t = ApiStruct.QryTrade(BrokerID=self.brokerID.encode(),
@@ -264,20 +263,17 @@ class CTPTrade(TraderApi):
                                TradeTimeEnd=endTime.encode()
                                )
         self.reqID += 1
-        self.ReqQryTrade(t, self.reqID)
-        return self.reqID
+        return self.ReqQryTrade(t, self.reqID)
 
     def qryAccount(self, currencyID=''):
         self.reqID += 1
         tradingAccount = ApiStruct.QryTradingAccount(BrokerID=self.brokerID.encode(), InvestorID=self.userID.encode(), CurrencyID=currencyID.encode())
-        self.ReqQryTradingAccount(tradingAccount, self.reqID)
-        return self.reqID
+        return self.ReqQryTradingAccount(tradingAccount, self.reqID)
 
     def qryPosition(self, instrumentID=''):
         self.reqID += 1
         p = ApiStruct.QryInvestorPosition(BrokerID=self.brokerID.encode(), InvestorID=self.userID.encode(), InstrumentID=instrumentID.encode())
-        self.ReqQryInvestorPosition(p, self.reqID)
-        return self.reqID
+        return self.ReqQryInvestorPosition(p, self.reqID)
 
     def qrySettlementInfoConfirm(self):
         self.reqID += 1
@@ -288,32 +284,28 @@ class CTPTrade(TraderApi):
     def qrypSettlementInfo(self, date):
         self.reqID += 1
         s = ApiStruct.QrySettlementInfo(BrokerID=self.brokerID.encode(), InvestorID=self.userID.encode(), TradingDay=date.encode())
-        self.ReqQrySettlementInfo(s, self.reqID)
-        return self.reqID
+        return self.ReqQrySettlementInfo(s, self.reqID)
 
     def qryProduct(self, productID):
         self.reqID += 1
         p = ApiStruct.QryProduct(ProductID=productID.encode())
-        self.ReqQryProduct(p, self.reqID)
-        return self.reqID
+        return self.ReqQryProduct(p, self.reqID)
 
     def qryDepthMarketData(self, instrumentID=''):
         self.reqID += 1
         d = ApiStruct.QryDepthMarketData(InstrumentID=instrumentID.encode())
-        self.ReqQryDepthMarketData(d, self.reqID)
-        return self.reqID
+        return self.ReqQryDepthMarketData(d, self.reqID)
 
     def qryInstrument(self, instrumentID='', exchangeID='', exchangeInstID='', productID=''):
         self.reqID += 1
         i = ApiStruct.QryInstrument(InstrumentID=instrumentID.encode(), ExchangeID=exchangeID.encode(), ExchangeInstID=exchangeInstID.encode(), ProductID=productID.encode())
-        self.ReqQryInstrument(i, self.reqID)
-        return self.reqID
+        return self.ReqQryInstrument(i, self.reqID)
 
     def qryInstrumentCommissionRate(self, instrumentID=''):
         self.reqID += 1
         rate = ApiStruct.QryInstrumentCommissionRate(BrokerID=self.brokerID.encode(), InvestorID=self.userID.encode(), InstrumentID=instrumentID.encode())
-        self.ReqQryInstrumentCommissionRate(rate, self.reqID)
-        return self.reqID
+        return self.ReqQryInstrumentCommissionRate(rate, self.reqID)
+
 
     def sendOrder(self, order):
         self.reqID += 1
@@ -343,9 +335,8 @@ class CTPTrade(TraderApi):
         o.MinVolume = order.get('MinVolume', 1)
         o.GTDDate = order.get('GTDDate', b'')
 
-        self.ReqOrderInsert(o, self.reqID)
+        return self.ReqOrderInsert(o, self.reqID)
 
-        return self.orderRef
 
     def cancelOrder(self, cancelOrderReq):
         self.reqID += 1
@@ -358,7 +349,7 @@ class CTPTrade(TraderApi):
                                          SessionID=cancelOrderReq['sessionID'].encode(),
                                          ActionFlag=b'0')
 
-        self.ReqOrderAction(c_o, self.reqID)
+        return self.ReqOrderAction(c_o, self.reqID)
 
     def close(self):
         if self.loginStatus:
@@ -369,16 +360,17 @@ class CTPTrade(TraderApi):
             self.ReqUserLogout(UserLogout, self.reqID)
             self.Release()
 
-    def register_rsp_callback(self, func_name, log=False):
+    def register_rsp_callback(self, func_name, log_type='请求回调处理', log=False):
         if getattr(self, func_name, None) == None:
             logger.error(f'<请求回调>不存在该回调函数')
             raise Exception(f'<请求回调>不存在该回调函数')
+
         def wrapper(handle):
             def handler(pdata, pRspInfo, nRequestID, bIsLast):
                 if pdata:
                     d = struct_format(pdata)
                     if log:
-                        logger.info(f'<请求回调处理>信息:{d}')
+                        logger.info(f'<{log_type}>信息:{d}')
                     handle(pdata)
 
                 if pRspInfo and pRspInfo.ErrorID != 0:
@@ -390,7 +382,7 @@ class CTPTrade(TraderApi):
             setattr(self, func_name, handler)
         return wrapper
 
-    def register_rtn_callback(self, func_name, log=False):
+    def register_rtn_callback(self, func_name, log_type='回报处理', log=False):
         if getattr(self, func_name, None) == None:
             logger.error(f'<回报>不存在该回报函数')
             raise Exception(f'<回报>不存在该回报函数')
@@ -398,7 +390,7 @@ class CTPTrade(TraderApi):
             def handler(pdata):
                 d = struct_format(pdata)
                 if log:
-                    logger.info(f'<回报处理>信息:{d}')
+                    logger.info(f'<{log_type}>信息:{d}')
                 handle(pdata)
             setattr(self, func_name, handler)
         return wrapper
@@ -490,11 +482,16 @@ class CTPTrade(TraderApi):
             logger.error(f'<ReqID: {nRequestID}>ErrorID:{RspInfo["ErrorID"]}  ErrorMsg:{RspInfo["ErrorMsg"]}')
 
     def OnRspOrderInsert(self, pInputOrder, pRspInfo, nRequestID, bIsLast):
-        order = struct_format(pInputOrder)
-        logger.info(f'<订单>报单插入:{order}')
+        if pInputOrder:
+            order = struct_format(pInputOrder)
+            logger.info(f'<订单>报单插入:{order}')
 
-        RspInfo = struct_format(pRspInfo)
-        logger.error(f'<ReqID: {nRequestID}>ErrorID:{RspInfo["ErrorID"]}  ErrorMsg:{RspInfo["ErrorMsg"]}')
+        if pRspInfo and pRspInfo.ErrorID != 0:
+            RspInfo = struct_format(pRspInfo)
+            logger.error(f'<ReqID: {nRequestID}>ErrorID:{RspInfo["ErrorID"]}  ErrorMsg:{RspInfo["ErrorMsg"]}')
+
+        if bIsLast:
+            logger.info(f'<订单>报单插入信息推送完毕')
 
     def OnRspOrderAction(self, pInputOrderAction, pRspInfo, nRequestID, bIsLast):
         if pInputOrderAction:
@@ -515,7 +512,6 @@ class CTPTrade(TraderApi):
     def OnRspQueryMaxOrderVolume(self, pQueryMaxOrderVolume, pRspInfo, nRequestID, bIsLast):...
 
     def OnRspSettlementInfoConfirm(self, pSettlementInfoConfirm, pRspInfo, nRequestID, bIsLast):
-
         if pSettlementInfoConfirm:
             settlementInfoConfirm = struct_format(pSettlementInfoConfirm)
             logger.info(f'<结算>信息:{settlementInfoConfirm}')
