@@ -323,11 +323,22 @@ class CTPTrade(TraderApi):
                                           OffsetFlag=offsetFlag.encode(), HedgeFlag=hedgeFlag.encode())
         return self.ReqQueryMaxOrderVolume(v, self.reqID)
 
-    def qryInstrumentMarginRate(self, instrumentID='', investorRange='1', brokerID='', investorID='', hedgeFlag='1'):
+    def qryInstrumentMarginRate(self, instrumentID='', investorRange='1', hedgeFlag='1'):
         self.reqID += 1
         m = ApiStruct.InstrumentMarginRate(InstrumentID=instrumentID.encode(), InvestorRange=investorRange.encode(),
-                                           BrokerID=brokerID.encode(), InvestorID=investorID.encode(), HedgeFlag=hedgeFlag.encode())
+                                           BrokerID=self.brokerID.encode(), InvestorID=self.userID.encode(), HedgeFlag=hedgeFlag.encode())
         return self.ReqQryInstrumentMarginRate(m, self.reqID)
+
+    def qryCFMMCTradingAccountKey(self):
+        self.reqID += 1
+        k = ApiStruct.QryCFMMCTradingAccountKey(BrokerID=self.brokerID.encode(), InvestorID=self.userID.encode())
+        return self.ReqQryCFMMCTradingAccountKey(k, self.reqID)
+
+    def qryCFMMCTradingAccountToken(self):
+        self.reqID += 1
+        t = ApiStruct.QueryCFMMCTradingAccountToken(BrokerID=self.brokerID.encode(), InvestorID=self.userID.encode())
+        return self.ReqQueryCFMMCTradingAccountToken(t, self.reqID)
+
 
     def sendOrder(self, order):
         self.reqID += 1
@@ -776,7 +787,17 @@ class CTPTrade(TraderApi):
 
     def OnRspQryBrokerTradingParams(self, pBrokerTradingParams, pRspInfo, nRequestID, bIsLast):...
 
-    def OnRspQryCFMMCTradingAccountKey(self, pCFMMCTradingAccountKey, pRspInfo, nRequestID, bIsLast):...
+    def OnRspQryCFMMCTradingAccountKey(self, pCFMMCTradingAccountKey, pRspInfo, nRequestID, bIsLast):
+        if pCFMMCTradingAccountKey:
+            p = struct_format(pCFMMCTradingAccountKey)
+            logger.info(f'<CFMMCTradingAccountKey>信息:{p}')
+
+        if pRspInfo and pRspInfo.ErrorID != 0:
+            RspInfo = struct_format(pRspInfo)
+            logger.error(f'<ReqID: {nRequestID}>ErrorID:{RspInfo["ErrorID"]}  ErrorMsg:{RspInfo["ErrorMsg"]}')
+
+        if bIsLast:
+            logger.info(f'<CFMMCTradingAccountKey>信息推送完毕')
 
     def OnRspQryCombAction(self, pCombAction, pRspInfo, nRequestID, bIsLast):...
 
@@ -807,7 +828,19 @@ class CTPTrade(TraderApi):
     def OnRspQryTradingNotice(self, pTradingNotice, pRspInfo, nRequestID, bIsLast):...
     def OnRspQryTransferSerial(self, pTransferSerial, pRspInfo, nRequestID, bIsLast):...
     def OnRspQueryBankAccountMoneyByFuture(self, pReqQueryAccount, pRspInfo, nRequestID, bIsLast):...
-    def OnRspQueryCFMMCTradingAccountToken(self, pQueryCFMMCTradingAccountToken, pRspInfo, nRequestID, bIsLast):...
+
+    def OnRspQueryCFMMCTradingAccountToken(self, pQueryCFMMCTradingAccountToken, pRspInfo, nRequestID, bIsLast):
+        if pQueryCFMMCTradingAccountToken:
+            p = struct_format(pQueryCFMMCTradingAccountToken)
+            logger.info(f'<CFMMCTradingAccountToken>信息:{p}')
+
+        if pRspInfo and pRspInfo.ErrorID != 0:
+            RspInfo = struct_format(pRspInfo)
+            logger.error(f'<ReqID: {nRequestID}>ErrorID:{RspInfo["ErrorID"]}  ErrorMsg:{RspInfo["ErrorMsg"]}')
+
+        if bIsLast:
+            logger.info(f'<CFMMCTradingAccountToken>信息推送完毕')
+
 
     def OnRtnOrder(self, pOrder):
         o = struct_format(pOrder)
@@ -826,5 +859,9 @@ class CTPTrade(TraderApi):
         o_a = struct_format(pOrderAction)
         e = struct_format(pRspInfo)
         logger.error(f'<订单>撤单错误回报:{o_a} 错误:{e}')
+
+    def OnRtnCFMMCTradingAccountToken(self, pCFMMCTradingAccountToken):
+        token = struct_format(pCFMMCTradingAccountToken)
+        logger.info(f'<Token>CFMMCTradingAccountToken回报:{token}')
 
 
