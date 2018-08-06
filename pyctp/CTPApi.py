@@ -51,7 +51,6 @@ class CTPMarket(MdApi):
             UserLogout.UserID = self.userID.encode()
             self.reqID = + 1
             self.ReqUserLogout(UserLogout, self.reqID)
-            self.Release()
 
     def subscribe(self, prodcodes:list):
         if self.loginStatus:
@@ -139,6 +138,7 @@ class CTPMarket(MdApi):
             self.loginStatus = False
             UserLogout = struct_format(pUserLogout)
             logger.info(f'<登出>行情接口：{UserLogout["UserID"]} 登出成功')
+            self.Release()
         else:
             RspInfo = struct_format(pRspInfo)
             logger.error(f'<ReqID: {nRequestID}>ErrorID:{RspInfo["ErrorID"]}  ErrorMsg:{RspInfo["ErrorMsg"]}')
@@ -495,6 +495,7 @@ class CTPTrade(TraderApi):
             self.loginStatus = False
             UserLogout = struct_format(pUserLogout)
             logger.info(f'<登出>交易接口：{UserLogout["UserID"]} 登出成功')
+            self.Release()
         else:
             RspInfo = struct_format(pRspInfo)
             logger.error(f'<ReqID: {nRequestID}>ErrorID:{RspInfo["ErrorID"]}  ErrorMsg:{RspInfo["ErrorMsg"]}')
